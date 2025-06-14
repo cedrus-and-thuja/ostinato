@@ -21,6 +21,7 @@ type Streamable[T any] interface {
 	Distinct(StreamFunc[T, any]) Streamable[T]
 	Filter(FilterFunc[T]) Streamable[T]
 	ToSlice() []T
+	ToMap(fn func(T) any) map[any]T
 
 	// Reduce applies a reduction function to the stream, returning a single value.
 	// The initial value can be provided, or if nil is passed, the first element of the stream is used as the initial value.
@@ -115,6 +116,15 @@ func (s streamable[T]) Reduce(fn func(any, T) any, initial any) any {
 
 func (s streamable[T]) ToSlice() []T {
 	return s.slice
+}
+
+func (s streamable[T]) ToMap(fn func(T) any) map[any]T {
+	result := make(map[any]T, len(s.slice))
+	for _, v := range s.slice {
+		key := fn(v)
+		result[key] = v
+	}
+	return result
 }
 
 func (s streamable[T]) GroupBy(fn func(T) any) any {
