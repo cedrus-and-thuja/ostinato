@@ -38,10 +38,15 @@ processed := result.(ostinato.Streamable[int])
 ### Basic Transformations
 
 ```go
-// Map: Transform each element
+// Map: Transform each element (same type)
 numbers := []int{1, 2, 3, 4, 5}
 doubled := ostinato.Stream(numbers).
     Map(func(n int) int { return n * 2 })
+
+// MapTo: Transform elements to a different type
+numbers := []int{1, 2, 3, 4, 5}
+stringified := ostinato.MapTo(ostinato.Stream(numbers), 
+    func(n int) string { return fmt.Sprintf("Number: %d", n) })
 
 // Filter: Keep elements matching condition
 even := ostinato.Stream(numbers).
@@ -133,12 +138,54 @@ avgPrice := expensiveElectronics.(map[string]float64)["total"] /
            expensiveElectronics.(map[string]float64)["count"]
 ```
 
+### Type Transformation Example
+
+```go
+type Person struct {
+    Name string
+    Age  int
+}
+
+type PersonDTO struct {
+    FullName string
+    AgeGroup string
+}
+
+people := []Person{
+    {Name: "Alice Smith", Age: 25},
+    {Name: "Bob Johnson", Age: 45},
+    {Name: "Charlie Brown", Age: 35},
+    {Name: "David Miller", Age: 55},
+}
+
+// Transform Person objects to PersonDTO objects
+dtos := ostinato.MapTo(ostinato.Stream(people), func(p Person) PersonDTO {
+    ageGroup := "adult"
+    if p.Age < 30 {
+        ageGroup = "young adult"
+    } else if p.Age >= 50 {
+        ageGroup = "senior"
+    }
+    
+    return PersonDTO{
+        FullName: p.Name,
+        AgeGroup: ageGroup,
+    }
+})
+
+// Further process the DTOs
+filteredDTOs := dtos.Filter(func(dto PersonDTO) bool {
+    return dto.AgeGroup != "adult"
+}).ToSlice()
+```
+
 ## API Reference
 
 ### Core Functions
 
 - `Stream[T](slice []T) Streamable[T]` - Create a new stream from a slice
-- `Map(fn MapFunc[T, T]) Streamable[T]` - Transform each element
+- `Map(fn func(T) T) Streamable[T]` - Transform each element (preserves type)
+- `MapTo[T, R](s Streamable[T], fn func(T) R) Streamable[R]` - Transform elements to a different type
 - `Filter(fn FilterFunc[T]) Streamable[T]` - Keep elements matching predicate  
 - `Distinct(fn IdentityFunc[T, any]) Streamable[T]` - Remove duplicates
 - `Reduce(fn func(any, T) any, initial any) any` - Reduce to single value

@@ -1,31 +1,24 @@
 package ostinato
 
 // takes an object and returns a transformation of it
-type MapFunc[T, R any] func(T) R
+type StreamFunc[T, R any] func(T) R
 
 // filters the stream based on a condition
 // returns true if the object should be included in the stream
 type FilterFunc[T any] func(T) bool
 
-// function that takes an object and returns a unique identifier for it
-// used for distinct operations
-// if nil is passed, the identity function is used
-// identity function returns the object itself
-type IdentityFunc[T any, R any] func(T) R
-
 // retuces objects in the stream to an accumulator
 // takes the object and the accumulator and returns the accumulator (or a new accumulator)
 type ReduceFunc[T, R any] func(R, T) R
 
-type GroupByFunc[T any, K any] func(T) K
 type Grouping[T any, K any] struct {
 	Key    K
 	Values []T
 }
 
 type Streamable[T any] interface {
-	Map(MapFunc[T, T]) Streamable[T]
-	Distinct(IdentityFunc[T, any]) Streamable[T]
+	Map(func(T) T) Streamable[T]
+	Distinct(StreamFunc[T, any]) Streamable[T]
 	Filter(FilterFunc[T]) Streamable[T]
 	ToSlice() []T
 
@@ -47,20 +40,29 @@ func Stream[T any](slice []T) Streamable[T] {
 	return streamable[T]{slice: slice}
 }
 
+// MapTo maps a stream of type T to a stream of type R using the provided function
+func MapTo[T, R any](s Streamable[T], fn func(T) R) Streamable[R] {
+	slice := s.ToSlice()
+	newSlice := make([]R, len(slice))
+	for i, v := range slice {
+		newSlice[i] = fn(v)
+	}
+	return streamable[R]{slice: newSlice}
+}
+
 type streamable[T any] struct {
 	slice []T
 }
 
-func (s streamable[T]) Map(fn MapFunc[T, T]) Streamable[T] {
+func (s streamable[T]) Map(fn func(T) T) Streamable[T] {
 	newSlice := make([]T, len(s.slice))
 	for i, v := range s.slice {
 		newSlice[i] = fn(v)
 	}
-	s.slice = newSlice
-	return s
+	return streamable[T]{slice: newSlice}
 }
 
-func (s streamable[T]) Distinct(fn IdentityFunc[T, any]) Streamable[T] {
+func (s streamable[T]) Distinct(fn StreamFunc[T, any]) Streamable[T] {
 	if fn == nil {
 		return s.Distinct(identity[T])
 	}
