@@ -19,27 +19,27 @@ func TestGroupByNumerics(t *testing.T) {
 			Values: []int{2, 4, 6},
 		},
 	}
-	reGrouped := grouped.([]Grouping[int, any])
+	reGrouped := grouped
 	// Since map iteration order is not guaranteed, we need to check the contents
 	// without relying on the order
 	if len(reGrouped) != len(expected) {
 		t.Errorf("Expected %d groups, got %d", len(expected), len(reGrouped))
 		return
 	}
-	
+
 	// Create maps for easy lookup
 	actualByKey := make(map[int][]int)
 	for _, g := range reGrouped {
 		key := g.Key.(int)
 		actualByKey[key] = g.Values
 	}
-	
+
 	expectedByKey := make(map[int][]int)
 	for _, g := range expected {
 		key := g.Key.(int)
 		expectedByKey[key] = g.Values
 	}
-	
+
 	// Compare the groups
 	for key, expectedValues := range expectedByKey {
 		actualValues, ok := actualByKey[key]
@@ -47,7 +47,7 @@ func TestGroupByNumerics(t *testing.T) {
 			t.Errorf("Missing group for key %v", key)
 			continue
 		}
-		
+
 		if !reflect.DeepEqual(actualValues, expectedValues) {
 			t.Errorf("For key %v, expected %v, got %v", key, expectedValues, actualValues)
 		}
@@ -93,27 +93,27 @@ func TestGroupByPeople(t *testing.T) {
 			},
 		},
 	}
-	reGrouped := grouped.([]Grouping[Person, any])
+	reGrouped := grouped
 	// Since map iteration order is not guaranteed, we need to check the contents
 	// without relying on the order
 	if len(reGrouped) != len(expected) {
 		t.Errorf("Expected %d groups, got %d", len(expected), len(reGrouped))
 		return
 	}
-	
+
 	// Create maps for easy lookup
 	actualByKey := make(map[string][]Person)
 	for _, g := range reGrouped {
 		key := g.Key.(string)
 		actualByKey[key] = g.Values
 	}
-	
+
 	expectedByKey := make(map[string][]Person)
 	for _, g := range expected {
 		key := g.Key.(string)
 		expectedByKey[key] = g.Values
 	}
-	
+
 	// Compare the groups
 	for key, expectedValues := range expectedByKey {
 		actualValues, ok := actualByKey[key]
@@ -121,7 +121,7 @@ func TestGroupByPeople(t *testing.T) {
 			t.Errorf("Missing group for key %v", key)
 			continue
 		}
-		
+
 		if !reflect.DeepEqual(actualValues, expectedValues) {
 			t.Errorf("For key %v, expected %v, got %v", key, expectedValues, actualValues)
 		}

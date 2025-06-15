@@ -30,7 +30,7 @@ type Streamable[T any] interface {
 	// It returns the accumulated value after processing all elements.
 	Reduce(func(any, T) any, any) any
 
-	GroupBy(func(T) any) any
+	GroupBy(func(T) any) []Grouping[T, any]
 }
 
 func identity[T any](v T) any {
@@ -127,7 +127,7 @@ func (s streamable[T]) ToMap(fn func(T) any) map[any]T {
 	return result
 }
 
-func (s streamable[T]) GroupBy(fn func(T) any) any {
+func (s streamable[T]) GroupBy(fn func(T) any) []Grouping[T, any] {
 	if fn == nil {
 		fn = identity[T]
 	}
