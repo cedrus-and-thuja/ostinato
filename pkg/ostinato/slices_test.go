@@ -1,6 +1,7 @@
 package ostinato
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -39,6 +40,45 @@ func TestMapSimpleChains(t *testing.T) {
 	ss = s.(streamable[int])
 	if !reflect.DeepEqual(ss.slice, expected) {
 		t.Errorf("Expected %v, got %v", expected, ss.slice)
+	}
+}
+
+func TestMapTo(t *testing.T) {
+	s := Stream([]int{1, 2, 3})
+	
+	// Map integers to strings
+	strStream := MapTo(s, func(v int) string {
+		return fmt.Sprintf("num-%d", v)
+	})
+	
+	expectedStrs := []string{"num-1", "num-2", "num-3"}
+	ss := strStream.(streamable[string])
+	if !reflect.DeepEqual(ss.slice, expectedStrs) {
+		t.Errorf("Expected %v, got %v", expectedStrs, ss.slice)
+	}
+	
+	// Map integers to a custom struct
+	type NumInfo struct {
+		Original int
+		Squared  int
+	}
+	
+	infoStream := MapTo(s, func(v int) NumInfo {
+		return NumInfo{
+			Original: v,
+			Squared:  v * v,
+		}
+	})
+	
+	expectedInfos := []NumInfo{
+		{Original: 1, Squared: 1},
+		{Original: 2, Squared: 4},
+		{Original: 3, Squared: 9},
+	}
+	
+	is := infoStream.(streamable[NumInfo])
+	if !reflect.DeepEqual(is.slice, expectedInfos) {
+		t.Errorf("Expected %v, got %v", expectedInfos, is.slice)
 	}
 }
 
